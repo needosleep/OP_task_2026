@@ -5,19 +5,18 @@
 #include <sstream>
 #include <algorithm>
 #include <iomanip>
+#include <fstream>
 
-using std::cin;
-using std::cout;
 using std::vector;
 using std::unordered_map;
 using std::string;
 
-void readNames(int &n, vector<string> &names) {
-    cin >> n;
+void readNames(std::ifstream &fin, int &n, vector<string> &names) {
+    fin >> n;
     names.resize(n);
 
     for (size_t i = 0; i < n; i++) {
-        cin >> names[i];
+        fin >> names[i];
     }
 }
 
@@ -30,13 +29,14 @@ void initMaps(vector<string> &names,
     }
 }
 
-void processTransactions(vector<string> &names,
+void processTransactions(std::ifstream &fin, 
+                         vector<string> &names,
                          unordered_map<string, double> &spent,
                          unordered_map<string, double> &owed) {
-    cin.ignore();
+    fin.ignore();
 
     string line;
-    while (std::getline(cin, line)) {
+    while (std::getline(fin, line)) {
         if (line.empty()) continue;
 
         std::stringstream sstream(line);
@@ -87,16 +87,18 @@ void processTransactions(vector<string> &names,
     }
 }
 
-void printStats(vector<string> &names,
+void printStats(std::ofstream &fout,
+                vector<string> &names,
                 unordered_map<string, double> &spent,
                 unordered_map<string, double> &owed) {
-    cout << std::fixed << std::setprecision(1);
+    fout << std::fixed << std::setprecision(1);
     for (string &name : names) {
-        cout << name << " " << spent[name] << " " << owed[name] << "\n";
+        fout << name << " " << spent[name] << " " << owed[name] << "\n";
     }
 }
 
-void settleDebts(vector<string> &names,
+void settleDebts(std::ofstream &fout, 
+                 vector<string> &names,
                  unordered_map<string, double> &spent,
                  unordered_map<string, double> &owed) {
     vector<std::pair<string, double>> payers, debtors;
@@ -116,7 +118,7 @@ void settleDebts(vector<string> &names,
     while (i < debtors.size() && j < payers.size()) {
         double amount = std::min(debtors[i].second, payers[j].second);
 
-        cout << debtors[i].first << " "
+        fout << debtors[i].first << " "
              << amount << " "
              << payers[j].first << "\n";
 
@@ -129,19 +131,32 @@ void settleDebts(vector<string> &names,
 }
 
 int main() {
+    std::string inputFile;
+    std::string outputFile = "output.txt";
+
+    std::cout << "Write the input file name\n";
+    std::cin >> inputFile;
+
+    std::ifstream fin(inputFile);
+    std::ofstream fout(outputFile);
+
+    if (!fin) return 1;
+
     int n;
     vector<string> names;
 
-    readNames(n, names);
+    readNames(fin, n, names);
 
     unordered_map<string, double> spent, owed;
     initMaps(names, spent, owed);
 
-    processTransactions(names, spent, owed);
+    processTransactions(fin, names, spent, owed);
 
-    printStats(names, spent, owed);
+    printStats(fout, names, spent, owed);
 
-    settleDebts(names, spent, owed);
+    settleDebts(fout, names, spent, owed);
+
+    std::cout << "The result is written to output.txt\n";
 
     return 0;
 }
